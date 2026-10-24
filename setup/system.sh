@@ -132,6 +132,11 @@ apt_install python3 python3-dev python3-pip python3-setuptools \
 	pollinate xxd openssh-client unzip \
 	unattended-upgrades cron ntpsec fail2ban rsyslog
 
+# Debian 13's rsyslog writes RFC 3339 timestamps, but Dovecot writes traditional ones into
+# mail.log as well and mail_log.py parses those, so keep rsyslog on the traditional format.
+echo '$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' > /etc/rsyslog.d/10-mailinabox-format.conf
+restart_service rsyslog
+
 # ### Suppress Upgrade Prompts
 # When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
 # because we don't yet support it.
