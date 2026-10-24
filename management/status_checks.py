@@ -329,8 +329,8 @@ def check_ssh_password(env, output):
 		return
 	with open("/etc/ssh/sshd_config", "r") as f:
 		sshd = f.read()
-	if re.search("\nPasswordAuthentication\s+yes", sshd) \
-				or not re.search("\nPasswordAuthentication\s+no", sshd):
+	if re.search(r"\nPasswordAuthentication\s+yes", sshd) \
+				or not re.search(r"\nPasswordAuthentication\s+no", sshd):
 		output.print_error(
 			"""The SSH server on this machine permits password-based login. A more secure
 			way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
@@ -1578,8 +1578,8 @@ class FileOutput:
 
 	def print_block(self, message, first_line="   "):
 		print(first_line, end='', file=self.buf)
-		message = re.sub("\n\s*", " ", message)
-		words = re.split("(\s+)", message)
+		message = re.sub(r"\n\s*", " ", message)
+		words = re.split(r"(\s+)", message)
 		linelen = 0
 		for w in words:
 			if self.width and (linelen + len(w) >

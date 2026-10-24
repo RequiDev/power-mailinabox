@@ -68,12 +68,12 @@ def scan_files(collector):
 
 		tmp_file = None
 
-        if not os.path.exists(fn):
-            continue
-        elif fn[-3:] == '.gz':
-            tmp_file = tempfile.NamedTemporaryFile()
-            with gzip.open(fn, 'rb') as f:
-                shutil.copyfileobj(f, tmp_file)
+		if not os.path.exists(fn):
+			continue
+		elif fn[-3:] == '.gz':
+			tmp_file = tempfile.NamedTemporaryFile()
+			with gzip.open(fn, 'rb') as f:
+				shutil.copyfileobj(f, tmp_file)
 
 		if VERBOSE:
 			print("Processing file", fn, "...")
@@ -407,7 +407,7 @@ def scan_postgrey_line(date, log, collector):
 	""" Scan a postgrey log line and extract interesting data """
 
 	m = re.match(
-		"action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), "
+		r"action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), "
 		"client_address=(.*), sender=(.*), recipient=(.*)", log)
 
 	if m:
@@ -526,7 +526,7 @@ def scan_postfix_lmtp_line(date, log, collector):
 
 	"""
 
-	m = re.match("([A-Z0-9]+): to=<(\S+)>, .* Saved", log)
+	m = re.match(r"([A-Z0-9]+): to=<(\S+)>, .* Saved", log)
 
 	if m:
 		_, user = m.groups()
@@ -563,7 +563,7 @@ def scan_postfix_submission_line(date, log, collector):
 	# allowed by Dovecot. Exclude trailing comma after the username when additional fields
 	# follow after.
 	m = re.match(
-		"([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)",
+		r"([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)",
 		log)
 
 	if m:
