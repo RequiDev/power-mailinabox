@@ -13,18 +13,13 @@ echo "Installing Mail-in-a-Box system management daemon..."
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
 #
-# gcc and build tools are required to install the latest version
-# of duplicity
-apt_install python3-pip python3-gpg virtualenv certbot rsync librsync2 python3-fasteners python3-future python3-lockfile \
-			gcc python3-dev librsync-dev gettext
-
-apt_get_quiet remove --autoremove --purge duplicity || /bin/true
-
-# Duplicity does the actual backups.
-# b2sdk is used for backblaze backups.
-# boto3 is used for amazon aws backups.
-# Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade b2sdk boto3 duplicity
+# Duplicity does the actual backups. b2sdk is used for backblaze backups and
+# boto3 for amazon aws backups; duplicity needs both installed system-wide.
+# Debian's packages get security updates and don't break on Python upgrades,
+# unlike the pip install used previously.
+apt_install python3-pip python3-gpg virtualenv certbot rsync gcc python3-dev gettext \
+	duplicity python3-b2sdk python3-boto3
+rm -f /usr/local/bin/duplicity # legacy pip install #NODOC
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -60,7 +55,7 @@ hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil expiringdict gunicorn \
 	qrcode[pil] pyotp \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver boto3 b2sdk
+	"idna>=2.0.0" cryptography psutil postfix-mta-sts-resolver boto3 b2sdk
 
 # Make the venv use the packaged gpgme bindings (the ones pip provides are severely out-of-date)
 if [ ! -d $venv/lib/python$(python_version)/site-packages/gpg/ ]; then
