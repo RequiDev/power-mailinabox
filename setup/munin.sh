@@ -37,11 +37,12 @@ EOF
 chown munin /var/log/munin/munin-cgi-html.log
 chown munin /var/log/munin/munin-cgi-graph.log
 
-# ensure munin-node knows the name of this machine
-# and reduce logging level to warning
+# ensure munin-node knows the name of this machine, reduce logging level to warning,
+# and only listen locally since munin itself runs here (binding :: fails without IPv6)
 management/editconf.py /etc/munin/munin-node.conf -s \
 	host_name=$PRIMARY_HOSTNAME \
-	log_level=1
+	log_level=1 \
+	host=127.0.0.1
 
 # Update the activated plugins through munin's autoconfiguration.
 munin-node-configure --shell --remove-also 2>/dev/null | sh || /bin/true
