@@ -112,6 +112,13 @@ PGPKEY=${DEFAULT_PGPKEY-}
 MTA_STS_MODE=${DEFAULT_MTA_STS_MODE:-enforce}
 EOF
 
+# Nextcloud and Z-Push are no longer installed. Remove what earlier versions left
+# behind, but keep the user files in $STORAGE_ROOT/owncloud.
+rm -rf /usr/local/lib/owncloud /usr/local/lib/z-push /var/lib/z-push /var/log/z-push \
+	/usr/sbin/z-push-admin /usr/sbin/z-push-top \
+	/etc/cron.d/mailinabox-nextcloud /etc/logrotate.d/nextcloud /etc/logrotate.d/z-push \
+	/etc/fail2ban/filter.d/miab-owncloud.conf
+
 # Start service configuration.
 source setup/system.sh
 source setup/ssl.sh
@@ -124,8 +131,6 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
-source setup/nextcloud.sh
-source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
 
