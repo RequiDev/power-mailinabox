@@ -97,13 +97,13 @@ def get_ssl_certificates(env):
 
 	# Sort the certificates to prefer good ones.
 	import datetime
-	now = datetime.datetime.utcnow()
+	now = datetime.datetime.now(datetime.timezone.utc)
 	ret = {}
 	for domain, cert_list in domains.items():
-		#for c in cert_list: print(domain, c.not_valid_before, c.not_valid_after, "("+str(now)+")", c.issuer, c.subject, c._filename)
+		#for c in cert_list: print(domain, c.not_valid_before_utc, c.not_valid_after_utc, "("+str(now)+")", c.issuer, c.subject, c._filename)
 		cert_list.sort(key = lambda cert : (
 			# must be valid NOW
-			cert["cert"].not_valid_before <= now <= cert["cert"].not_valid_after,
+			cert["cert"].not_valid_before_utc <= now <= cert["cert"].not_valid_after_utc,
 
 			# prefer one that is not self-signed
 			cert["cert"].issuer != cert["cert"].subject,
@@ -116,7 +116,7 @@ def get_ssl_certificates(env):
 
 			# prefer one with the expiration furthest into the future so
 			# that we can easily rotate to new certs as we get them
-			cert["cert"].not_valid_after,
+			cert["cert"].not_valid_after_utc,
 
 				###########################################################
 				# We always choose the certificate that is good for the
@@ -511,7 +511,7 @@ def install_cert_copy_file(fn, env):
 	path = "%s-%s-%s.pem" % (
 		# common name, which should be filename safe because it is IDNA-encoded, but in case of a malformed cert make sure it's ok to use as a filename
 		safe_domain_name(cn),
-		cert.not_valid_after.date().isoformat().replace("-",
+		cert.not_valid_after_utc.date().isoformat().replace("-",
 														""),  # expiration date
 		hexlify(cert.fingerprint(
 			hashes.SHA256())).decode("ascii")[0:8],  # fingerprint prefix
@@ -642,14 +642,14 @@ def check_certificate(domain,
 	if just_check_domain:
 		return ("OK", None)
 
-	# Check that the certificate hasn't expired. The datetimes returned by the
-	# certificate are 'naive' and in UTC. We need to get the current time in UTC.
+	# Check that the certificate hasn't expired. The certificate's datetimes are
+	# timezone-aware UTC, so compare against the current time in UTC.
 	import datetime
-	now = datetime.datetime.utcnow()
-	if not (cert.not_valid_before <= now <= cert.not_valid_after):
+	now = datetime.datetime.now(datetime.timezone.utc)
+	if not (cert.not_valid_before_utc <= now <= cert.not_valid_after_utc):
 		return (
 			"The certificate has expired or is not yet valid. It is valid from %s to %s."
-			% (cert.not_valid_before, cert.not_valid_after), None)
+			% (cert.not_valid_before_utc, cert.not_valid_after_utc), None)
 
 	# Next validate that the certificate is valid. This checks whether the certificate
 	# is self-signed, that the chain of trust makes sense, that it is signed by a CA
@@ -692,7 +692,7 @@ def check_certificate(domain,
 		# good.
 
 		# But is it expiring soon?
-		cert_expiration_date = cert.not_valid_after
+		cert_expiration_date = cert.not_valid_after_utc
 		ndays = (cert_expiration_date - now).days
 		if not rounded_time or ndays <= 10:
 			# Yikes better renew soon!
