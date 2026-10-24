@@ -18,12 +18,13 @@ source /etc/mailinabox.conf # load global vars
 # So we'll use apt-get to manually install the dependencies of roundcube that we know we need,
 # and then we'll manually install roundcube from source.
 
-# These dependencies are from `apt-cache showpkg roundcube-core`.
+# These dependencies are from `apt-cache showpkg roundcube-core`. PHP 8.4 no longer
+# ships the imap and pspell extensions, which Roundcube doesn't need.
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap php-imap\
-	php-gd php-pspell libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring php-gnupg \
+	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap php-xml php-zip \
+	php-gd libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring php-gnupg \
 	sqlite3
 
 # Install Roundcube from source if it is not already present or if it is out of date.
@@ -31,12 +32,12 @@ apt_install \
 # whether we have the latest version of everything.
 # For the latest versions, see:
 #   https://github.com/roundcube/roundcubemail/releases
-#   https://github.com/mfreiholz/persistent_login/
+#   https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin/
 #   https://github.com/stremlau/html5_notifier/
 # The easiest way to get the package hashes is to run this script and get the hash from
 # the error message.
-VERSION=1.6.5
-HASH=326fcc206cddc00355e98d1e40fd0bcd9baec69f
+VERSION=1.6.20
+HASH=15c70410af3071219aae209ba89e2ff1dacb1ab5
 PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.3
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 
@@ -74,7 +75,7 @@ if [ $needs_update == 1 ]; then
 	rm -f /tmp/roundcube.tgz
 
 	# install roundcube persistent_login plugin
-	git_clone https://github.com/mfreiholz/persistent_login.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
+	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
 
 	# install roundcube html5_notifier plugin
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
@@ -208,6 +209,4 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 # Database should exist, created by migration script
 sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
 
-# Enable PHP modules.
-phpenmod -v php mcrypt imap
 restart_service php$(php_version)-fpm
