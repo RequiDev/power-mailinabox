@@ -115,7 +115,7 @@ apt_get_quiet autoremove
 #
 # * unattended-upgrades: Apt tool to install security updates automatically.
 # * cron: Runs background processes periodically.
-# * ntp: keeps the system time correct
+# * ntpsec: keeps the system time correct (Debian 13 no longer ships the classic ntp)
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 # * netcat-openbsd: `nc` command line networking tool
 # * git: we install some things directly from github
@@ -128,7 +128,7 @@ echo Installing system packages...
 apt_install python3 python3-dev python3-pip python3-setuptools \
 	netcat-openbsd wget curl git sudo coreutils bc file \
 	pollinate xxd openssh-client unzip \
-	unattended-upgrades cron ntp fail2ban rsyslog
+	unattended-upgrades cron ntpsec fail2ban rsyslog
 
 # ### Suppress Upgrade Prompts
 # When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
@@ -349,10 +349,8 @@ fi
 # installing bind9 or else apt won't be able to resolve a server to
 # download bind9 from.
 
-# On Debian 12, this service needs to be installed first
-if [ "$(get_os_code)" -eq "${OS_DEBIAN_12}" ]; then
-	apt_get_quiet install systemd-resolved
-fi
+# Debian no longer installs this service by default.
+apt_get_quiet install systemd-resolved
 
 rm -f /etc/resolv.conf
 management/editconf.py /etc/systemd/resolved.conf DNSStubListener=no

@@ -16,12 +16,8 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	# we install it inside a virtualenv. In this script, we don't have the virtualenv yet
 	# so we install the python package globally
 
-	# On Debian 12, this package must be installed via apt-get
-	if [ "$(get_os_code)" -eq "${OS_DEBIAN_12}" ]; then
-		apt_get_quiet install python3-email-validator
-	else
-		hide_output pip3 install "email_validator>=1.0.0"
-	fi
+	# Debian refuses system-wide pip installs, so this must come from apt-get
+	apt_get_quiet install python3-email-validator
 
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a (Power) Mail-in-a-Box!
