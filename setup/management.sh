@@ -131,8 +131,9 @@ export PYTHONPATH=$(pwd)/management
 exec gunicorn -b localhost:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start
-cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
-hide_output systemctl link -f /lib/systemd/system/mailinabox.service
+# systemd refuses to enable linked unit files, so install it as a regular local unit.
+rm -f /lib/systemd/system/mailinabox.service # legacy location #NODOC
+cp --remove-destination conf/mailinabox.service /etc/systemd/system/mailinabox.service # target was previously a symlink so remove it first
 hide_output systemctl daemon-reload
 hide_output systemctl enable mailinabox.service
 

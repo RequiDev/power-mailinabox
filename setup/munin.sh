@@ -64,8 +64,8 @@ mkdir -p /var/lib/munin-node/plugin-state/
 # Create a systemd service for munin.
 ln -sf $(pwd)/management/munin_start.sh /usr/local/lib/mailinabox/munin_start.sh
 chmod 0744 /usr/local/lib/mailinabox/munin_start.sh
-cp --remove-destination conf/munin.service /lib/systemd/system/munin.service # target was previously a symlink so remove first
-hide_output systemctl link -f /lib/systemd/system/munin.service
+rm -f /lib/systemd/system/munin.service # legacy location #NODOC
+cp --remove-destination conf/munin.service /etc/systemd/system/munin.service # target was previously a symlink so remove first
 hide_output systemctl daemon-reload
 hide_output systemctl unmask munin.service
 hide_output systemctl enable munin.service
