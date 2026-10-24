@@ -676,7 +676,7 @@ def build_sshfp_records():
 		return []
 
 	keys = shell("check_output", [
-		"ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p",
+		"ssh-keyscan", "-t", "rsa,ecdsa,ed25519", "-p",
 		str(port), "localhost"
 	])
 	keys = sorted(keys.split("\n"))
