@@ -21,8 +21,10 @@ hostname $PRIMARY_HOSTNAME
 # This doesn't mean that the cloud provider must provide IPv6 connectivity. We just want
 # the loopback interface to also work on IPv6 (that is, we want :: to be available). This
 # is required because apparently nsd expects this to exist.
-
-management/editconf.py /etc/sysctl.conf "net.ipv6.conf.lo.disable_ipv6 = 0"
+#
+# Debian 13 no longer reads /etc/sysctl.conf, so our kernel settings live in sysctl.d.
+touch /etc/sysctl.d/99-mailinabox.conf
+management/editconf.py /etc/sysctl.d/99-mailinabox.conf "net.ipv6.conf.lo.disable_ipv6 = 0"
 hide_output sysctl --system
 
 # ### Fix permissions

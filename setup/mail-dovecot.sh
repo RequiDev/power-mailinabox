@@ -51,7 +51,7 @@ EOF
 # See http://www.dovecot.org/pipermail/dovecot/2013-March/088834.html.
 # A reboot is required for this to take effect (which we don't do as
 # as a part of setup). Test with `cat /proc/sys/fs/inotify/max_user_instances`.
-management/editconf.py /etc/sysctl.conf \
+management/editconf.py /etc/sysctl.d/99-mailinabox.conf \
 	fs.inotify.max_user_instances=1024
 
 # Notes on the settings below:
