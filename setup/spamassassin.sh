@@ -22,12 +22,13 @@ source setup/functions.sh # load our functions
 echo "Installing SpamAssassin..."
 apt_install spampd razor pyzor libmail-dkim-perl
 
-# Allow spamassassin to download new rules.
-# On Debian 12, this file is named /etc/default/spamd
-if [ -f /etc/default/spamassassin ]; then
-	management/editconf.py /etc/default/spamassassin CRON=1
-else
-	management/editconf.py /etc/default/spamd CRON=1
+# Allow spamassassin to download new rules daily.
+hide_output systemctl enable --now spamassassin-maintenance.timer
+
+# Debian enables the standalone spamd daemon (when its package is installed), but
+# spampd runs SpamAssassin itself.
+if systemctl cat spamd.service > /dev/null 2>&1; then
+	hide_output systemctl disable --now spamd
 fi
 
 # Configure pyzor, which is a client to a live database of hashes of
@@ -50,10 +51,10 @@ echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
 # * Increase the maximum message size of scanned messages from the default of 64KB to 500KB, which
 #   is Spamassassin (spamc)'s own default. Specified in KBytes.
 # * Disable localmode so Pyzor, DKIM and DNS checks can be used.
-management/editconf.py /etc/default/spampd \
-	DESTPORT=10026 \
-	ADDOPTS="\"--maxsize=2000\"" \
-	LOCALONLY=0
+management/editconf.py /etc/spampd.cfg -s \
+	relayport=10026 \
+	maxsize=2000 \
+	local-only=0
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
 # email with a report about the message. This also protects the user
