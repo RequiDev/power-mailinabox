@@ -41,36 +41,25 @@ echo "PRAGMA journal_mode=delete;" | sqlite3 $db_path > /dev/null
 
 # ### User Authentication
 
-# Have Dovecot query our database, and not system users, for authentication.
-sed -i "s/#*\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
-sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
+# Have Dovecot query our database, and not system users, for authentication
+# (passdb) and for each user's quota limit (userdb). The mailbox location and
+# the uid/gid are the same for every user and are set in mail-dovecot.sh.
+# The quota column holds "0" for unlimited or a size such as "5G".
+cat > /etc/dovecot/mailinabox.d/20-auth.conf << EOF;
+# Written by Mail-in-a-Box. Do not edit; changes are lost on the next setup run.
+sql_driver = sqlite
+sqlite_path = $db_path
 
-# Specify how the database is to be queried for user authentication (passdb)
-# and where user mailboxes are stored (userdb).
-cat > /etc/dovecot/conf.d/auth-sql.conf.ext << EOF;
-passdb {
-  driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+passdb sql {
+  default_password_scheme = SHA512-CRYPT
+  query = SELECT email AS user, password FROM users WHERE email = '%{user}'
 }
-userdb {
-  driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+userdb sql {
+  query = SELECT email AS user, quota AS quota_storage_size FROM users WHERE email = '%{user}'
+  iterate_query = SELECT email AS user FROM users
 }
-EOF
-
-# Configure the SQL to query for a user's metadata and password.
-cat > /etc/dovecot/dovecot-sql.conf.ext << EOF;
-driver = sqlite
-connect = $db_path
-default_pass_scheme = SHA512-CRYPT
-password_query = SELECT email as user, password FROM users WHERE email='%u';
-user_query = SELECT email AS user, "mail" as uid, "mail" as gid, "$STORAGE_ROOT/mail/mailboxes/%d/%n" as home, '*:bytes=' || quota AS quota_rule FROM users WHERE email='%u';
-iterate_query = SELECT email AS user FROM users;
-EOF
-chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions
 
 # Have Dovecot provide an authorization service that Postfix can access & use.
-cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
 service auth {
   unix_listener /var/spool/postfix/private/auth {
     mode = 0666
