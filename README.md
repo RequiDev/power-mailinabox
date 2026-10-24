@@ -1,4 +1,13 @@
 # Power Mail-in-a-Box
+
+> [!WARNING]
+> **This is an unofficial fork, and every change on the `trixie` branch was made entirely by AI** (Anthropic's Claude), not by a human developer.
+>
+> The `trixie` branch ports Power Mail-in-a-Box to **Debian 13 (trixie) only**, and removes Nextcloud, Z-Push and the Roundcube CardDAV plugin.
+> The install and upgrade instructions below still point to the original project, which doesn't support Debian 13.
+> To install this branch, clone it and run `sudo setup/start.sh`.
+> Use at your own risk.
+
 ## **[Installation](#installation)** (current version: v60.5)
 ## **[Upgrading Quick Start](#upgrading)**
 
