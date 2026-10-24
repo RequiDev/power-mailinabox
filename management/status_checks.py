@@ -21,7 +21,7 @@ import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records, get_dkim_record
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
@@ -1204,6 +1204,8 @@ def check_mail_domain(domain, env, output):
 		check_alias_exists("Postmaster contact address",
 						"postmaster@" + domain, env, output)
 
+	check_dkim_record(domain, env, output)
+
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
@@ -1220,6 +1222,41 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s."""
 			% (dbl, domain))
+
+
+def check_dkim_record(domain, env, output):
+	# With external DNS nothing else notices a DKIM record that doesn't match the signing key.
+	rname, expected = get_dkim_record(env)
+	qname = rname + "." + domain
+
+	def public_key(txt):
+		tags = dict(
+			tag.strip().split("=", 1) for tag in txt.split(";") if "=" in tag)
+		return tags.get("p", "").strip()
+
+	response = query_dns(qname, "TXT", nxdomain=None, as_list=True)
+	if response == "[timeout]":
+		output.print_warning(
+			"Timed out looking up the DKIM record (%s). Please try again later."
+			% qname)
+		return
+	published = [
+		b"".join(r.strings).decode("utf-8", "replace") for r in response or []
+	]
+	published = [txt for txt in published if txt.startswith("v=DKIM1")]
+
+	if any(public_key(txt) == public_key(expected) for txt in published):
+		output.print_ok("Domain's DKIM record is correct. [%s]" % qname)
+	elif not published:
+		output.print_error(
+			"""This domain's DKIM record (%s) is not set, so recipients cannot verify mail sent from @%s. Set it to the
+			value shown on the External DNS page. It may take several hours for public DNS to update after a change."""
+			% (qname, domain))
+	else:
+		output.print_error(
+			"""This domain's DKIM record (%s) does not match this box's signing key, so recipients cannot verify mail
+			sent from @%s. Set it to the value shown on the External DNS page. It may take several hours for public DNS
+			to update after a change.""" % (qname, domain))
 
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
