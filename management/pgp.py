@@ -28,7 +28,7 @@ def key_representation(key):
 		"subkeys": []
 	}
 
-	now = datetime.datetime.utcnow()
+	now = datetime.datetime.now(datetime.timezone.utc)
 	key_rep["ids"] = [id.uid for id in key.uids]
 	# No duplicate email addresses in this list
 	key_rep["ids_emails"] = list({id.email for id in key.uids})
@@ -48,9 +48,9 @@ def key_representation(key):
 		"expires":
 		skey.expires if skey.expires != 0 else None,
 		"expires_date":
-		datetime.datetime.utcfromtimestamp(skey.expires).date().isoformat()
+		datetime.datetime.fromtimestamp(skey.expires, datetime.timezone.utc).date().isoformat()
 		if skey.expires != 0 else None,
-		"expires_days": (datetime.datetime.utcfromtimestamp(skey.expires) -
+		"expires_days": (datetime.datetime.fromtimestamp(skey.expires, datetime.timezone.utc) -
 						now).days if skey.expires != 0 else None,
 		"expired":
 		skey.expired == 1,
@@ -170,8 +170,8 @@ if __name__ == "__main__":
 	daemon_key = get_daemon_key()
 
 	exp = daemon_key.subkeys[0].expires
-	now = datetime.datetime.utcnow()
-	days_left = (datetime.datetime.utcfromtimestamp(exp) - now).days
+	now = datetime.datetime.now(datetime.timezone.utc)
+	days_left = (datetime.datetime.fromtimestamp(exp, datetime.timezone.utc) - now).days
 	if days_left > 14:
 		sys.exit(0)
 	else:

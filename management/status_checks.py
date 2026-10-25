@@ -419,7 +419,7 @@ def check_free_memory(rounded_values, env, output):
 
 
 def run_pgp_checks(env, output, rounded_time=False):
-	now = datetime.datetime.utcnow()
+	now = datetime.datetime.now(datetime.timezone.utc)
 	output.add_heading("PGP Keyring")
 
 	# Check daemon key
@@ -438,8 +438,8 @@ def run_pgp_checks(env, output, rounded_time=False):
 	elif k.revoked == 1:
 		output.print_error(f"The daemon's key ({k.fpr}) has been revoked.")
 	else:
-		exp = datetime.datetime.utcfromtimestamp(
-			sk.expires)  # Our daemon key only has one subkey
+		exp = datetime.datetime.fromtimestamp(
+			sk.expires, datetime.timezone.utc)  # Our daemon key only has one subkey
 		days = (exp - now).days
 		days_txt = " " if rounded_time else f" in {days} days "
 		if days <= 10 and sk.expires != 0:
@@ -465,7 +465,7 @@ def run_pgp_checks(env, output, rounded_time=False):
 				continue
 			else:
 				for skey in key.subkeys:
-					exp = datetime.datetime.utcfromtimestamp(skey.expires)
+					exp = datetime.datetime.fromtimestamp(skey.expires, datetime.timezone.utc)
 					if skey.expired == 1:
 						expired.append((key, skey))
 					elif (exp - now).days < 10 and skey.expires != 0:
