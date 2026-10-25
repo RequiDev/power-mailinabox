@@ -512,10 +512,12 @@ def run_network_checks(env, output):
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.
 	# See if we can reach one of Google's MTAs with a 5-second timeout.
-	code, ret = shell("check_call",
+	# Debian 13's nc reports success on stderr even without -v.
+	code, ret = shell("check_output",
 					["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"],
+					capture_stderr=True,
 					trap=True)
-	if ret == 0:
+	if code == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:
 		output.print_warning(
